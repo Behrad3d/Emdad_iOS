@@ -58,24 +58,6 @@ class LoginViewController: UIViewController {
     
     }
     
-    func handleKeyboard(keyboardShowing: Bool) {
-        
-        var constraintValue = 0
-        
-        if (keyboardShowing) {
-            
-            constraintValue = 200
-            
-        } else {
-            
-            constraintValue = 0
-            
-        }
-        
-        
-        
-        
-    }
     
     
     @IBAction func LoginAction(_ sender: Any) {
@@ -105,3 +87,52 @@ class LoginViewController: UIViewController {
 
 }
 
+//Handling Keybaord Stuff
+extension LoginViewController {
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillDisappear), name: Notification.Name.UIKeyboardWillHide, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillAppear), name: Notification.Name.UIKeyboardWillShow, object: nil)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    
+    @objc func keyboardWillAppear() {
+        //Do something here
+        handleKeyboard(true)
+    }
+    
+    @objc func keyboardWillDisappear() {
+        handleKeyboard(false)
+    }
+    
+    func handleKeyboard(_ keyboardShowing: Bool) {
+        
+        var constraintValue : CGFloat = 0
+        
+        if (keyboardShowing) {
+            
+            constraintValue = 200
+            
+        } else {
+            
+            constraintValue = 0
+            
+        }
+        
+        UIView.animate(withDuration: 0.5) {
+            self.centerLayoutConstraint.constant = constraintValue
+        }
+        
+        
+        
+        
+    }
+    
+    
+    
+}
