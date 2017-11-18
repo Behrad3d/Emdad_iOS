@@ -49,3 +49,33 @@ func submit_phone_number(_ phoneNumber: String, completion: @escaping (_ result:
     completion(true, nil)
 }
 
+func submit_request(_ request: Emdad_Request, completion: @escaping (_ result: Bool, _ errorCode: Int? ) -> ()) {
+    
+    let requestBody: [String: Any] = ["token": user_token,
+                                      "package_id": request.package_id!,
+                                      "lat" : request.lat,
+                                      "long": request.long,
+                                      "address" : request.address ?? "",
+                                      "count" : request.count ?? 1,
+                                      "deliver_to" : request.deliver_to ?? "",
+                                      "title" : request.title ?? "" ]
+    
+    
+    
+    
+    Alamofire.request("\(Server_URL)add_request", method: .post, parameters: requestBody).responseJSON { response in
+        switch response.result {
+        case .success:
+            
+            print("Validation Successful")
+            completion(true, nil)
+        case .failure(let error):
+            completion(false, 0)
+            print(error)
+        }
+    }
+        
+    
+    
+}
+

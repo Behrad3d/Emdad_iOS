@@ -74,7 +74,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     func initiateMap() {
         
         
-        let camera = GMSCameraPosition.camera(withLatitude: 37.86, longitude: 51.20, zoom: 3.0)
+        let camera = GMSCameraPosition.camera(withLatitude: 37.86, longitude: 51.20, zoom: 4.0)
         mapView = GMSMapView.map(withFrame: self.mapUIView.bounds, camera: camera)
         mapView.delegate = self
         self.mapUIView.addSubview(mapView)
@@ -113,6 +113,11 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         if (segue.identifier == "addNewRequest") {
             if let destination = segue.destination as? RequestDetailViewController {
                 destination.packageTypes = self.packageTypes
+                if temporaryMarker != nil {
+                    let temporaryRequest = Emdad_Request(package_id: -1, lat: temporaryMarker!.position.latitude, long: temporaryMarker!.position.longitude, address: "", count: 0, deliver_to: "", title: "")
+                    destination.currentReqeust = temporaryRequest
+                }
+                
                 destination.delegate = self
             }
             
@@ -120,6 +125,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         
     }
+    
+    
     
     
     func updateMap() {
@@ -155,10 +162,11 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         marker.position = centerMapCoordinate
         
         marker.isDraggable = true
-        marker.map = mapView
+//        marker.map = mapView
         marker.iconView = getIconForRequestStatus("new")
         
         temporaryMarker = marker
+        temporaryMarker?.map = mapView
         self.preparViewForAddingNew(active: true)
         
     }
@@ -171,8 +179,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             
         } else {
             
-            //temporaryMarker?.map = nil
+            temporaryMarker?.map = nil
             temporaryMarker = nil
+            
             
         }
         
@@ -218,6 +227,12 @@ extension MapViewController : ModalDelegate {
         } else {
             
             // we submit the location details
+            submit_request(request!, completion: { (success, errorCode) in
+                
+                print("Submission success: \(success)")
+                //TBD
+            })
+            
             self.currentRequests.append(request!)
             self.updateMap()
         }
@@ -231,8 +246,11 @@ extension MapViewController : ModalDelegate {
     
     @IBAction func acceptLocation(_ sender: NSObject) {
         
+        
        self.performSegue(withIdentifier: "addNewRequest", sender: nil)
     }
+    
+    
     
     
 }

@@ -34,6 +34,7 @@ class RequestDetailViewController : UIViewController {
     @IBAction func OkButtonClicked(_ sender: Any) {
         
         if let delegate = self.delegate {
+            self.finalizeRequest()
             delegate.newRequest(request: currentReqeust)
         }
         self.dismiss(animated: true) 
@@ -64,13 +65,23 @@ class RequestDetailViewController : UIViewController {
    //=== View Controller Functions
     
     override func viewDidLoad() {
+        self.hideKeyboardWhenTappedAround()
         
         if currentReqeust == nil {
             currentReqeust = Emdad_Request(package_id: -1, lat: 0, long: 0, address: "", count: 0, deliver_to: "", title: "")
         }
         
     }
+    //= Custom Functions
     
+    func finalizeRequest() {
+        
+        currentReqeust?.title = txtTitle.text
+        currentReqeust?.address = txtAddress.text
+        currentReqeust?.deliver_to = txtReceiver.text
+        
+        print("This is our current request: \(currentReqeust!)")
+    }
     
     
 }
@@ -102,6 +113,48 @@ extension RequestDetailViewController : UITableViewDelegate, UITableViewDataSour
         currentReqeust?.package_id = indexPath.row
         
     }
+    
+}
+
+extension RequestDetailViewController {
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillDisappear), name: Notification.Name.UIKeyboardWillHide, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillAppear), name: Notification.Name.UIKeyboardWillShow, object: nil)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    
+    @objc func keyboardWillAppear() {
+        //Do something here
+        handleKeyboard(true)
+    }
+    
+    @objc func keyboardWillDisappear() {
+        handleKeyboard(false)
+    }
+    
+    func handleKeyboard(_ keyboardShowing: Bool) {
+        
+        
+        
+    }
+    
+    func hideKeyboardWhenTappedAround() {
+        let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    
+    
     
 }
 

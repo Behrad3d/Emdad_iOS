@@ -18,13 +18,16 @@ class LoginViewController: UIViewController {
     
     @IBOutlet weak var btnLogin: UIButton!
     
+    @IBOutlet weak var containerView: UIView!
+    
+    
     var loginStep = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        
+        self.hideKeyboardWhenTappedAround()
         setupUI()
         
         
@@ -46,16 +49,24 @@ class LoginViewController: UIViewController {
     
     func submitPhoneNumber() {
         prog.startAnimating()
-        
+        lblGuide.isHidden = true
         if (!validatePhoneNumber(txtPhonenumber.text)) {
             lblGuide.text = "شماره تلفن وارد شده صحیح نمی‌باشد"
             prog.stopAnimating()
+            lblGuide.isHidden = false
+            
         }
 
+        txtPhonenumber.isEnabled = false
+        txtActivationCode.isHidden = false
+        
+        prog.startAnimating()
+        lblGuide.isHidden = true
+        
     }
     
     func submitActivationCode() {
-    
+        
     }
     
     
@@ -116,7 +127,7 @@ extension LoginViewController {
         
         if (keyboardShowing) {
             
-            constraintValue = 200
+            constraintValue = -150
             
         } else {
             
@@ -124,13 +135,24 @@ extension LoginViewController {
             
         }
         
-        UIView.animate(withDuration: 0.5) {
+        UIView.animate(withDuration: 1.0) {
             self.centerLayoutConstraint.constant = constraintValue
+            self.view.layoutIfNeeded()
         }
         
         
         
         
+    }
+    
+    func hideKeyboardWhenTappedAround() {
+        let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        self.containerView.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
     }
     
     
