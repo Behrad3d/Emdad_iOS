@@ -24,16 +24,20 @@ protocol ModalDelegate {
 
 class MapViewController: UIViewController, GMSMapViewDelegate {
     
+    @IBOutlet weak var bottomConstraint: NSLayoutConstraint!
     
+    var KCamera : GMSCameraPosition!
     var mapView: GMSMapView!
     var centerMapCoordinate:CLLocationCoordinate2D!
     var first = true
+    private var clusterManager: GMUClusterManager!
+    let kClusterItemCount = 10000
     
     //let regionRadius: CLLocationDistance = 1000
     var currentRequests : [Emdad_Request] = []
     var packageTypes : [Emdad_Package_Type] = []
     
-    let locationManager = CLLocationManager()
+    
     var temporaryMarker : GMSMarker?
     
     
@@ -50,18 +54,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
 
     
     
-    func checkLocationAuthorizationStatus() {
-        if CLLocationManager.authorizationStatus() == .authorizedWhenInUse {
-            //mapView.showsUserLocation = true
-        } else {
-            locationManager.requestWhenInUseAuthorization()
-        }
-    }
+
     
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        checkLocationAuthorizationStatus()
+        
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -74,21 +72,23 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     func initiateMap() {
         
         
-        let camera = GMSCameraPosition.camera(withLatitude: 37.86, longitude: 51.20, zoom: 4.0)
-        mapView = GMSMapView.map(withFrame: self.mapUIView.bounds, camera: camera)
+        KCamera = GMSCameraPosition.camera(withLatitude: 37.86, longitude: 51.20, zoom: 6.0)
+        mapView = GMSMapView.map(withFrame: self.mapUIView.bounds, camera: KCamera)
         mapView.delegate = self
+        mapView.isMyLocationEnabled = true
         self.mapUIView.addSubview(mapView)
         //mapUIView = mapView
         
         updateRequests()
+        setupClusterManager()
         
     
     }
     override func viewDidLoad() {
        
         
+        self.navigationController?.navigationBar.tintColor = UIColor.green
         
-        registerAnnotationViewClasses()
         
     }
     
@@ -135,14 +135,16 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         for request in currentRequests {
             
            // self.mapView.addAnnotation(request)
-            let marker = GMSMarker()
-            marker.position = request.coordinate
-            marker.title = request.title
+            //let marker = GMSMarker()
+            //marker.position = request.coordinate
+            //marker.title = request.title
             
-            marker.iconView = getIconForRequestStatus(request.status)
+            //marker.iconView = getIconForRequestStatus(request.status)
             
             //marker.snippet =
-            marker.map = mapView
+            //marker.map = mapView
+            let clusterItem = EmdadClusterableItem(position: request.coordinate, request: request)
+            clusterManager.add(clusterItem)
 
         }
         
@@ -151,7 +153,16 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     @IBAction func mapTypeChanged(_ sender: UISegmentedControl) {
         
+        switch (sender.selectedSegmentIndex) {
+        case 0:
+            mapView.mapType = .normal
+        case 1:
+            mapView.mapType = .satellite
+        default:
+            mapView.mapType = .hybrid
+        }
         
+    
         
     }
     
@@ -173,18 +184,33 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     func preparViewForAddingNew(active: Bool) {
         
-        locationActionBar.isHidden = !active
+        
+
+        self.navigationController?.setNavigationBarHidden(active, animated: true)
         
         if (active) {
+            bottomConstraint.constant  = -100
             
         } else {
             
+            
+            bottomConstraint.constant = 0
             temporaryMarker?.map = nil
             temporaryMarker = nil
             
             
         }
+        self.locationActionBar.isHidden = false
         
+        self.view.layoutIfNeeded()
+        
+        
+        UIView.animate(withDuration: 0.5, animations: {
+            self.bottomConstraint.constant = active ? 0 : -100
+            self.view.layoutIfNeeded()
+        }) { (finished) in
+            self.locationActionBar.isHidden = !active
+        }
     }
     
     
@@ -192,6 +218,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let latitude = mapView.camera.target.latitude
         let longitude = mapView.camera.target.longitude
         centerMapCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        
+        temporaryMarker?.position = position.target
     }
     
 
@@ -199,16 +227,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     
     
-    func centerMapOnLocation(location: CLLocation) {
-       // let coordinateRegion = MKCoordinateRegionMakeWithDistance(location.coordinate,                                                                  regionRadius, regionRadius)
-        //mapView.setRegion(coordinateRegion, animated: true)
-    }
-    
-    func registerAnnotationViewClasses() {
-        //mapView.register(BikeView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultAnnotationViewReuseIdentifier)
-        //     /   mapView.register(ClusterView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
-    }
-    
+
     
     
 }
@@ -254,6 +273,97 @@ extension MapViewController : ModalDelegate {
     
     
 }
+
+extension MapViewController :  GMUClusterManagerDelegate, GMUClusterRendererDelegate  {
+    
+    
+
+    
+    func setupClusterManager() {
+        let iconGenerator = GMUDefaultClusterIconGenerator()
+        let algorithm = GMUNonHierarchicalDistanceBasedAlgorithm()
+        let renderer = GMUDefaultClusterRenderer(mapView: mapView,
+                                                 clusterIconGenerator: iconGenerator)
+        
+        renderer.delegate = self
+        clusterManager = GMUClusterManager(map: mapView, algorithm: algorithm,
+                                           renderer: renderer)
+        
+        // Generate and add random items to the cluster manager.
+        
+        
+        // Call cluster() after items have been added to perform the clustering
+        // and rendering on map.
+        clusterManager.cluster()
+        
+    }
+    
+
+    func renderer(_ renderer: GMUClusterRenderer, willRenderMarker marker: GMSMarker) {
+        
+        if marker.userData is EmdadClusterableItem{
+            let user_data = marker.userData as! EmdadClusterableItem
+            marker.iconView = getIconForRequestStatus(user_data.request.status)
+            
+            //marker.title = user_data.request.title
+            //marker.snippet = user_data.request.address
+            
+            //marker.icon = UIImage(named: "locationicon")
+        }
+    }
+    func mapView(_ mapView: GMSMapView, markerInfoWindow marker: GMSMarker) -> UIView? {
+    
+        let storyboard = UIStoryboard.init(name: "Main", bundle: Bundle.main)
+        
+        if let infoBubbleVC = storyboard.instantiateViewController(withIdentifier: "infoBubble") as? InfoBubbleViewController{
+            
+            if marker.userData is EmdadClusterableItem{
+                
+                let user_data = marker.userData as! EmdadClusterableItem
+                let request = user_data.request
+                infoBubbleVC.request = request
+                
+                infoBubbleVC.typeString = " - "
+                if (request?.package_id != nil) {
+                    
+                    if ( request!.package_id! > -1 && request!.package_id! < packageTypes.count) {
+                        let targetPackageType = packageTypes[request?.package_id ?? 0]
+                        infoBubbleVC.typeString = "\(targetPackageType.title ?? "")-\(targetPackageType.content_per_package ?? "")"
+                        
+                    }
+                }
+                
+                
+                let targetView = infoBubbleVC.view
+                let frm = CGRect(x: 0, y: 0, width: self.view.frame.width * 0.7, height: 300)
+                
+                targetView?.frame = frm
+                targetView?.layoutIfNeeded()
+                
+                return targetView
+            } else {
+                
+                print (marker.userData)
+                
+                
+                return nil
+            }
+            
+            
+            
+            
+            
+            
+        }
+        
+        return nil
+        
+        
+        
+    }
+    
+}
+
 
 
 

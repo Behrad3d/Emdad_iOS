@@ -69,6 +69,7 @@ class Emdad_Request : NSObject, Mappable, MKAnnotation {
     var deliver_to : String?
     var title : String?
     var status : String = ""
+    var updateTime : Double?
     var coordinate: CLLocationCoordinate2D {
         return CLLocationCoordinate2D(latitude: self.lat, longitude: self.long)
     }
@@ -82,6 +83,7 @@ class Emdad_Request : NSObject, Mappable, MKAnnotation {
         self.count = count
         self.deliver_to = deliver_to
         self.title = title
+        
         super.init()
 
     }
@@ -95,6 +97,7 @@ class Emdad_Request : NSObject, Mappable, MKAnnotation {
         self.deliver_to <- map["deliver_to"]
         self.title <- map["title"]
         self.status <- map["status"]
+        self.updateTime <- map["updated_at"]
     }
     
     

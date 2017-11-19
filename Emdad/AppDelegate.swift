@@ -12,7 +12,7 @@ import GoogleMaps
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    var packageTypes : [Emdad_Package_Type] = []
+    
     var window: UIWindow?
 
 

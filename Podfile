@@ -10,6 +10,7 @@ target 'Emdad' do
   pod 'ObjectMapper'
   pod 'AlamofireObjectMapper'
   pod 'GoogleMaps'
+  #pod 'Google-Maps-iOS-Utils'
 
 end
 

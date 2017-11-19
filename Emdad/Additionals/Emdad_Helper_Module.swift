@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 
+
 func getIconForRequestStatus (_ status: String) -> UIImageView {
     let imageName = "locationIcon"
     var tintColor = UIColor.orange
@@ -40,12 +41,67 @@ func getIconForRequestStatus (_ status: String) -> UIImageView {
     return markerView
 }
 
+func getProperTextForStatus(_ status : String) -> String {
+    switch status {
+    case "waiting":
+        return "در حال انتظار..."
+        
+    case "delivered":
+        return "دریافت شده"
+        
+    case "on_the_way":
+        return "ارسال شده"
+        
+    case "new":
+        return "جدید"
+        
+    default:
+        return "نا مشخص"
+        
+    }
+    
+}
+
 
 
 func validatePhoneNumber(_ inputNumber: String?) -> Bool {
     
-    //TBD
+    if (inputNumber == nil) { return false }
+    
+    if (inputNumber!.count < 11) { return false}
+    
+    if (inputNumber!.count > 13) { return false}
+    
+    if (inputNumber!.count > 11) {
+        let index = inputNumber!.index(inputNumber!.startIndex, offsetBy: 0)
+        let startingCharacter = inputNumber![index]
+        if (startingCharacter != "+") { return false}
+    }
+    if (inputNumber!.count == 11) {
+        
+        let index1 = inputNumber!.index(inputNumber!.startIndex, offsetBy: 0)
+        let startingCharacter = inputNumber![index1]
+        let index2 = inputNumber!.index(inputNumber!.startIndex, offsetBy: 1)
+        let startingCharacter2 = inputNumber![index2]
+        
+        if (startingCharacter != "0" || startingCharacter2 != "9") {
+            return false
+            
+        }
+    }
+    
     return true
     
 }
+
+func validateConfirmationCode(_ confirmCode: String?) -> Bool {
+    
+    if (confirmCode == nil) { return false}
+    
+    if (confirmCode!.count != 4) { return false }
+    
+    
+    return true
+}
+
 

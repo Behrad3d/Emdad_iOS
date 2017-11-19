@@ -102,7 +102,7 @@ extension RequestDetailViewController : UITableViewDelegate, UITableViewDataSour
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! PackageTableViewCell
         
         cell.lblTitle.text = "\(packageTypes[indexPath.row].title ?? "")-\(packageTypes[indexPath.row].content_per_package ?? "")"
-        cell.lblTitle.font = UIFont(name: "X_Yekan.ttf", size: 16)
+        cell.lblTitle.font = UIFont(name: "X Yekan", size: 16)
         return cell
 
     }
